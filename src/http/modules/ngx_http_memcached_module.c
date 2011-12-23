@@ -339,10 +339,9 @@ found:
         goto no_valid;
 
     length:
-
         len = p;
 
-        while (*p && *p++ != CR) { /* void */ }
+        while (*p && (*p++ != CR || *p != ' ')) { /* void */ }
 
         u->headers_in.content_length_n = ngx_atoof(len, p - len - 1);
         if (u->headers_in.content_length_n == -1) {
@@ -355,6 +354,7 @@ found:
 
         u->headers_in.status_n = 200;
         u->state->status = 200;
+        while (*p && (*p++ != CR)) {}
         u->buffer.pos = p + 1;
 
         return NGX_OK;
