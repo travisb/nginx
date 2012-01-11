@@ -298,7 +298,7 @@ ngx_http_memcached_process_header(ngx_http_request_t *r)
 found:
 
     *p = '\0';
-
+    
     line.len = p - u->buffer.pos - 1;
     line.data = u->buffer.pos;
 
@@ -342,9 +342,9 @@ found:
 
         len = p;
 
-        while (*p && *p++ != CR) { /* void */ }
-
-        r->headers_out.content_length_n = ngx_atoof(len, p - len - 1);
+        while (*p && (*p++ != CR && (int) (*p) != 32)) { /* void */ }
+        int offset = *p == 32 ? 0 : 1;
+        u->headers_in.content_length_n = ngx_atoof(len, p - len - offset) ;
         if (r->headers_out.content_length_n == -1) {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                           "memcached sent invalid length in response \"%V\" "
