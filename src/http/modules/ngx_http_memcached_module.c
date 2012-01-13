@@ -342,9 +342,9 @@ found:
 
         len = p;
 
-        while (*p && *p++ != CR) { /* void */ }
-
-        r->headers_out.content_length_n = ngx_atoof(len, p - len - 1);
+        while (*p && (*p++ != CR && *p != ' ')) { /* void */ }
+        int offset = *p == ' ' ? 0 : 1;
+        r->headers_out.content_length_n = ngx_atoof(len, p - len - offset);
         if (r->headers_out.content_length_n == -1) {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                           "memcached sent invalid length in response \"%V\" "
@@ -352,10 +352,10 @@ found:
                           &line, &ctx->key);
             return NGX_HTTP_UPSTREAM_INVALID_HEADER;
         }
-
+        while(*p++) {}
         u->headers_in.status_n = 200;
         u->state->status = 200;
-        u->buffer.pos = p + 1;
+        u->buffer.pos = p;
 
         return NGX_OK;
     }
