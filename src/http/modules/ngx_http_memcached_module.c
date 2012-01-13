@@ -3,7 +3,7 @@
  * Copyright (C) Igor Sysoev
  */
 
-
+#include <errno.h>
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_http.h>
@@ -280,6 +280,7 @@ ngx_http_memcached_reinit_request(ngx_http_request_t *r)
 static ngx_int_t
 ngx_http_memcached_process_header(ngx_http_request_t *r)
 {
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "i got this far");
     u_char                    *p, *len;
     ngx_str_t                  line;
     ngx_http_upstream_t       *u;
@@ -292,7 +293,6 @@ ngx_http_memcached_process_header(ngx_http_request_t *r)
             goto found;
         }
     }
-
     return NGX_AGAIN;
 
 found:
@@ -306,7 +306,6 @@ found:
                    "memcached: \"%V\"", &line);
 
     p = u->buffer.pos;
-
     ctx = ngx_http_get_module_ctx(r, ngx_http_memcached_module);
 
     if (ngx_strncmp(p, "VALUE ", sizeof("VALUE ") - 1) == 0) {
@@ -315,7 +314,7 @@ found:
 
         if (ngx_strncmp(p, ctx->key.data, ctx->key.len) != 0) {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                          "memcached sent invalid key in response \"%V\" "
+                          "THIS SHTIS SLDKFJSDLKJmemcached sent sdlfkajasldkjflsadkjfsadf                         invalid key in response \"%V\" "
                           "for key \"%V\"",
                           &line, &ctx->key);
 
@@ -339,24 +338,33 @@ found:
         goto no_valid;
 
     length:
-
+        
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "length");
         len = p;
+        while (*p && (*p++ != CR && (int) (*p) != 32)) {  /* void */ }
+//        int offset = *p == 32 ? 0 : 1;
+        u->headers_in.content_length_n = 3; //ngx_atoof(len, p - len - offset);
 
-        while (*p && (*p++ != CR && (int) (*p) != 32)) { /* void */ }
-        int offset = *p == 32 ? 0 : 1;
-        u->headers_in.content_length_n = ngx_atoof(len, p - len - offset) ;
-        if (r->headers_out.content_length_n == -1) {
+        if (u->headers_in.content_length_n == -1) {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                          "memcached sent invalid length in response \"%V\" "
+                          "ITS THIS ONEmemcached sent invalid length in response \"%V\" "
                           "for key \"%V\"",
                           &line, &ctx->key);
             return NGX_HTTP_UPSTREAM_INVALID_HEADER;
         }
-
+/*        while (*p && (*p++ != CR)) {
+        
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "im spinning");
+            sleep(1);
+        }
+        */
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "im spinning");
         u->headers_in.status_n = 200;
         u->state->status = 200;
-        u->buffer.pos = p + 1;
-
+        u->buffer.pos = p + 2;
+        *(p+4) = '\0';
+                    
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "im returning");
         return NGX_OK;
     }
 
